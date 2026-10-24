@@ -1,0 +1,329 @@
+-- ====================================================
+-- สคริปต์แฮ๊คเกอร์ (Hacker Hub) - ภาษาไทยเต็มรูปแบบ
+-- ====================================================
+
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local LocalPlayer = Players.LocalPlayer
+
+-- สร้าง ScreenGui
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "HackerHubGui"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+
+-- Variables ควบคุมสถานะฟังก์ชัน
+local NoclipEnabled = false
+local InfiniteJumpEnabled = false
+local ESPEnabled = false
+local AutoHoldEnabled = false
+local SpeedValue = 16
+local JumpPowerValue = 50
+
+-- ----------------------------------------------------
+-- 1. ปุ่ม เปิด/ปิด สคริปต์ (รูปแฮกเกอร์ด้านบน)
+-- ----------------------------------------------------
+local ToggleButton = Instance.new("ImageButton")
+ToggleButton.Name = "HackerToggleButton"
+ToggleButton.Size = UDim2.new(0, 55, 0, 55)
+ToggleButton.Position = UDim2.new(0.5, -27, 0, 10)
+ToggleButton.Image = "rbxassetid://10852882937" -- ไอคอนแฮกเกอร์/หน้ากาก
+ToggleButton.BackgroundColor3 = Color3.fromRGB(10, 25, 10)
+ToggleButton.BorderColor3 = Color3.fromRGB(0, 255, 100)
+ToggleButton.BorderSizePixel = 2
+ToggleButton.Active = true
+ToggleButton.Draggable = true
+ToggleButton.Parent = ScreenGui
+
+local UICornerToggle = Instance.new("UICorner")
+UICornerToggle.CornerRadius = UDim.new(1, 0)
+UICornerToggle.Parent = ToggleButton
+
+-- ----------------------------------------------------
+-- 2. หน้าต่างหลัก (Main Window)
+-- ----------------------------------------------------
+local MainFrame = Instance.new("Frame")
+MainFrame.Name = "MainFrame"
+MainFrame.Size = UDim2.new(0, 520, 0, 310) -- ขนาดแนวนอน ไม่กว้างเกินไป
+MainFrame.Position = UDim2.new(0.5, -260, 0.5, -155)
+MainFrame.BackgroundColor3 = Color3.fromRGB(8, 14, 8)
+MainFrame.BorderColor3 = Color3.fromRGB(0, 200, 80)
+MainFrame.BorderSizePixel = 2
+MainFrame.ClipsDescendants = true
+MainFrame.Active = true
+MainFrame.Draggable = true
+MainFrame.Parent = ScreenGui
+
+-- พื้นหลังตัวเลขไบนารี 1 กับ 0 กระจายเต็มหน้าต่าง
+local BinaryBackground = Instance.new("TextLabel")
+BinaryBackground.Name = "BinaryBg"
+BinaryBackground.Size = UDim2.new(1, 0, 1, 0)
+BinaryBackground.BackgroundTransparency = 1
+BinaryBackground.TextColor3 = Color3.fromRGB(0, 120, 40)
+BinaryBackground.TextTransparency = 0.75
+BinaryBackground.TextSize = 12
+BinaryBackground.TextWrapped = true
+BinaryBackground.TextXAlignment = Enum.TextXAlignment.Left
+BinaryBackground.TextYAlignment = Enum.TextYAlignment.Top
+BinaryBackground.Font = Enum.Font.Code
+BinaryBackground.Text = "101010010110101010100101010101101010101001010101011010101010010101010110101010100101010101101010\n010101101010101001010101011010101010010101010110101010100101010101101010101001010101011010101010\n101010010110101010100101010101101010101001010101011010101010010101010110101010100101010101101010\n010101101010101001010101011010101010010101010110101010100101010101101010101001010101011010101010\n101010010110101010100101010101101010101001010101011010101010010101010110101010100101010101101010\n010101101010101001010101011010101010010101010110101010100101010101101010101001010101011010101010\n101010010110101010100101010101101010101001010101011010101010010101010110101010100101010101101010\n010101101010101001010101011010101010010101010110101010100101010101101010101001010101011010101010\n101010010110101010100101010101101010101001010101011010101010010101010110101010100101010101101010"
+BinaryBackground.Parent = MainFrame
+
+-- แถบหัวข้อหน้าต่าง
+local TitleBar = Instance.new("Frame")
+TitleBar.Size = UDim2.new(1, 0, 0, 35)
+TitleBar.BackgroundColor3 = Color3.fromRGB(4, 20, 8)
+TitleBar.BorderColor3 = Color3.fromRGB(0, 180, 60)
+TitleBar.BorderSizePixel = 1
+TitleBar.Parent = MainFrame
+
+local TitleLabel = Instance.new("TextLabel")
+TitleLabel.Size = UDim2.new(1, -40, 1, 0)
+TitleLabel.Position = UDim2.new(0, 10, 0, 0)
+TitleLabel.BackgroundTransparency = 1
+TitleLabel.Text = "☣️ แฮ๊คเกอร์ - HACKER SYSTEM ☣️"
+TitleLabel.TextColor3 = Color3.fromRGB(0, 255, 120)
+TitleLabel.TextSize = 16
+TitleLabel.Font = Enum.Font.SourceSansBold
+TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
+TitleLabel.Parent = TitleBar
+
+-- ปุ่มย่อ/ขยาย หน้าต่าง
+local ResizeBtn = Instance.new("TextButton")
+ResizeBtn.Size = UDim2.new(0, 25, 0, 25)
+ResizeBtn.Position = UDim2.new(1, -30, 0, 5)
+ResizeBtn.BackgroundColor3 = Color3.fromRGB(15, 45, 20)
+ResizeBtn.TextColor3 = Color3.fromRGB(0, 255, 100)
+ResizeBtn.Text = "▢"
+ResizeBtn.TextSize = 14
+ResizeBtn.Parent = TitleBar
+
+local IsExpanded = false
+ResizeBtn.MouseButton1Click:Connect(function()
+    IsExpanded = not IsExpanded
+    if IsExpanded then
+        MainFrame:TweenSize(UDim2.new(0, 680, 0, 400), "Out", "Quad", 0.3, true)
+    else
+        MainFrame:TweenSize(UDim2.new(0, 520, 0, 310), "Out", "Quad", 0.3, true)
+    end
+end)
+
+-- ซ่อน/แสดง หน้าต่างเมื่อคลิกปุ่มแฮกเกอร์ด้านบน
+ToggleButton.MouseButton1Click:Connect(function()
+    MainFrame.Visible = not MainFrame.Visible
+end)
+
+-- ----------------------------------------------------
+-- 3. พื้นที่ใส่ปุ่มฟังก์ชัน (Container)
+-- ----------------------------------------------------
+local ScrollContainer = Instance.new("ScrollingFrame")
+ScrollContainer.Size = UDim2.new(1, -20, 1, -45)
+ScrollContainer.Position = UDim2.new(0, 10, 0, 40)
+ScrollContainer.BackgroundTransparency = 1
+ScrollContainer.ScrollBarThickness = 6
+ScrollContainer.ScrollBarImageColor3 = Color3.fromRGB(0, 200, 80)
+ScrollContainer.CanvasSize = UDim2.new(0, 0, 0, 380)
+ScrollContainer.Parent = MainFrame
+
+local UIGrid = Instance.new("UIGridLayout")
+UIGrid.CellSize = UDim2.new(0, 235, 0, 42)
+UIGrid.CellPadding = UDim2.new(0, 10, 0, 10)
+UIGrid.Parent = ScrollContainer
+
+-- ฟังก์ชันสร้างปุ่มเปิด/ปิด (Toggle Button)
+local function CreateToggleButton(text, callback)
+    local Button = Instance.new("TextButton")
+    Button.BackgroundColor3 = Color3.fromRGB(12, 30, 15)
+    Button.BorderColor3 = Color3.fromRGB(0, 180, 70)
+    Button.BorderSizePixel = 1
+    Button.Text = text .. " : [ ปิด ]"
+    Button.TextColor3 = Color3.fromRGB(180, 220, 180)
+    Button.TextSize = 14
+    Button.Font = Enum.Font.SourceSansBold
+    Button.Parent = ScrollContainer
+
+    local enabled = false
+    Button.MouseButton1Click:Connect(function()
+        enabled = not enabled
+        if enabled then
+            Button.BackgroundColor3 = Color3.fromRGB(0, 80, 30)
+            Button.TextColor3 = Color3.fromRGB(0, 255, 120)
+            Button.Text = text .. " : [ เปิด ]"
+        else
+            Button.BackgroundColor3 = Color3.fromRGB(12, 30, 15)
+            Button.TextColor3 = Color3.fromRGB(180, 220, 180)
+            Button.Text = text .. " : [ ปิด ]"
+        end
+        callback(enabled)
+    end)
+    return Button
+end
+
+-- ----------------------------------------------------
+-- 4. การทำงานของแต่ละฟังก์ชัน
+-- ----------------------------------------------------
+
+-- 1. เดินทะลุกำแพง
+CreateToggleButton("เดินทะลุกำแพง", function(state)
+    NoclipEnabled = state
+end)
+
+RunService.Stepped:Connect(function()
+    if NoclipEnabled and LocalPlayer.Character then
+        for _, part in pairs(LocalPlayer.Character:GetDescendants()) do
+            if part:IsA("BasePart") then
+                part.CanCollide = false
+            end
+        end
+    end
+end)
+
+-- 2. กระโดดไม่จำกัด (Infinite Jump)
+CreateToggleButton("กระโดดไม่จำกัด", function(state)
+    InfiniteJumpEnabled = state
+end)
+
+UserInputService.JumpRequest:Connect(function()
+    if InfiniteJumpEnabled and LocalPlayer.Character then
+        local humanoid = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+        if humanoid then
+            humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+        end
+    end
+end)
+
+-- 3. มองเห็นทุกคน (ESP)
+local ESPHighlights = {}
+CreateToggleButton("มองเห็นทุกคน (ESP)", function(state)
+    ESPEnabled = state
+    if not state then
+        for _, highlight in pairs(ESPHighlights) do
+            highlight:Destroy()
+        end
+        ESPHighlights = {}
+    end
+end)
+
+RunService.RenderStepped:Connect(function()
+    if ESPEnabled then
+        for _, player in pairs(Players:GetPlayers()) do
+            if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                if not player.Character:FindFirstChild("HackerESP") then
+                    local highlight = Instance.new("Highlight")
+                    highlight.Name = "HackerESP"
+                    highlight.FillColor = Color3.fromRGB(0, 255, 100)
+                    highlight.OutlineColor = Color3.fromRGB(0, 50, 0)
+                    highlight.FillTransparency = 0.5
+                    highlight.OutlineTransparency = 0
+                    highlight.Adornee = player.Character
+                    highlight.Parent = player.Character
+                    table.insert(ESPHighlights, highlight)
+                end
+            end
+        end
+    end
+end)
+
+-- 4. กดปุ่มค้างให้เป็นทีเดียวได้ (Auto Hold / Hold-to-Click)
+CreateToggleButton("กดปุ่มค้างรัวอัตโนมัติ", function(state)
+    AutoHoldEnabled = state
+end)
+
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed or not AutoHoldEnabled then return end
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Keyboard then
+        -- จำลองการคลิกรัวเมื่อกดค้างไว้
+        spawn(function()
+            while UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) and AutoHoldEnabled do
+                task.wait(0.05)
+            end
+        end)
+    end
+end)
+
+-- ----------------------------------------------------
+-- 5. ช่องปรับความเร็วเดิน และ กระโดดสูง
+-- ----------------------------------------------------
+
+-- กล่องปรับความเร็ว (1-1000)
+local SpeedBoxFrame = Instance.new("Frame")
+SpeedBoxFrame.BackgroundColor3 = Color3.fromRGB(12, 30, 15)
+SpeedBoxFrame.BorderColor3 = Color3.fromRGB(0, 180, 70)
+SpeedBoxFrame.Parent = ScrollContainer
+
+local SpeedLabel = Instance.new("TextLabel")
+SpeedLabel.Size = UDim2.new(0.6, 0, 1, 0)
+SpeedLabel.BackgroundTransparency = 1
+SpeedLabel.Text = "ความเร็ว (1-1000):"
+SpeedLabel.TextColor3 = Color3.fromRGB(0, 255, 120)
+SpeedLabel.TextSize = 13
+SpeedLabel.Font = Enum.Font.SourceSansBold
+SpeedLabel.Parent = SpeedBoxFrame
+
+local SpeedInput = Instance.new("TextBox")
+SpeedInput.Size = UDim2.new(0.35, 0, 0.7, 0)
+SpeedInput.Position = UDim2.new(0.6, 0, 0.15, 0)
+SpeedInput.BackgroundColor3 = Color3.fromRGB(5, 15, 5)
+SpeedInput.BorderColor3 = Color3.fromRGB(0, 255, 100)
+SpeedInput.Text = "16"
+SpeedInput.TextColor3 = Color3.fromRGB(255, 255, 255)
+SpeedInput.TextSize = 14
+SpeedInput.Parent = SpeedBoxFrame
+
+SpeedInput.FocusLost:Connect(function()
+    local num = tonumber(SpeedInput.Text)
+    if num then
+        SpeedValue = math.clamp(num, 1, 1000)
+        SpeedInput.Text = tostring(SpeedValue)
+    else
+        SpeedInput.Text = tostring(SpeedValue)
+    end
+end)
+
+-- กล่องปรับความสูงการกระโดด
+local JumpBoxFrame = Instance.new("Frame")
+JumpBoxFrame.BackgroundColor3 = Color3.fromRGB(12, 30, 15)
+JumpBoxFrame.BorderColor3 = Color3.fromRGB(0, 180, 70)
+JumpBoxFrame.Parent = ScrollContainer
+
+local JumpLabel = Instance.new("TextLabel")
+JumpLabel.Size = UDim2.new(0.6, 0, 1, 0)
+JumpLabel.BackgroundTransparency = 1
+JumpLabel.Text = "กระโดดสูง:"
+JumpLabel.TextColor3 = Color3.fromRGB(0, 255, 120)
+JumpLabel.TextSize = 13
+JumpLabel.Font = Enum.Font.SourceSansBold
+JumpLabel.Parent = JumpBoxFrame
+
+local JumpInput = Instance.new("TextBox")
+JumpInput.Size = UDim2.new(0.35, 0, 0.7, 0)
+JumpInput.Position = UDim2.new(0.6, 0, 0.15, 0)
+JumpInput.BackgroundColor3 = Color3.fromRGB(5, 15, 5)
+JumpInput.BorderColor3 = Color3.fromRGB(0, 255, 100)
+JumpInput.Text = "50"
+JumpInput.TextColor3 = Color3.fromRGB(255, 255, 255)
+JumpInput.TextSize = 14
+JumpInput.Parent = JumpBoxFrame
+
+JumpInput.FocusLost:Connect(function()
+    local num = tonumber(JumpInput.Text)
+    if num then
+        JumpPowerValue = math.clamp(num, 50, 1000)
+        JumpInput.Text = tostring(JumpPowerValue)
+    else
+        JumpInput.Text = tostring(JumpPowerValue)
+    end
+end)
+
+-- Loop อัปเดตความเร็วและความสูงกระโดดให้ตัวละคร
+RunService.RenderStepped:Connect(function()
+    if LocalPlayer.Character then
+        local humanoid = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+        if humanoid then
+            humanoid.WalkSpeed = SpeedValue
+            humanoid.UseJumpPower = true
+            humanoid.JumpPower = JumpPowerValue
+        end
+    end
+end)
